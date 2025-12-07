@@ -1,65 +1,153 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { Container, Heading, Text, TextField, Button } from "@radix-ui/themes";
+import { ConnectButton } from "@iota/dapp-kit";
+import { useState } from "react";
+import { useLuckyNumber } from "@/hooks/useLuckyNumber";
+
+export default function HomePage() {
+  const [guess, setGuess] = useState("0");
+  const { account, isLoading, txHash, error, lastResult, guessNumber } =
+    useLuckyNumber();
+
+  const handlePlay = async () => {
+    const n = parseInt(guess);
+    if (Number.isNaN(n)) return;
+    if (n < 0 || n > 9) return;
+    await guessNumber(n);
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <main>
+      <Container
+        style={{ maxWidth: "800px", margin: "0 auto", padding: "2rem 0" }}
+      >
+        <header
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "2rem",
+          }}
+        >
+          <Heading size="6">🎲 Lucky Number dApp</Heading>
+          <ConnectButton />
+        </header>
+
+        {!account && (
+          <Text style={{ marginBottom: "1rem" }}>
+            Hãy kết nối ví IOTA để bắt đầu chơi.
+          </Text>
+        )}
+
+        {account && (
+          <>
+            <Text
+              style={{
+                marginBottom: "1rem",
+                display: "block",
+                fontFamily: "monospace",
+              }}
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+              Ví: {account.address}
+            </Text>
+
+            <div
+              style={{
+                padding: "1.5rem",
+                background: "var(--gray-a3)",
+                borderRadius: "8px",
+                marginBottom: "1rem",
+              }}
             >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+              <Heading size="4" style={{ marginBottom: "1rem" }}>
+                Đoán số may mắn (0–9)
+              </Heading>
+
+              <div
+                style={{
+                  display: "flex",
+                  gap: "0.75rem",
+                  alignItems: "center",
+                  marginBottom: "0.75rem",
+                }}
+              >
+                <TextField.Root
+                  value={guess}
+                  onChange={(e) => setGuess(e.target.value)}
+                  type="number"
+                  min="0"
+                  max="9"
+                  style={{ maxWidth: "120px" }}
+                  disabled={isLoading}
+                />
+                <Button size="3" onClick={handlePlay} disabled={isLoading}>
+                  {isLoading ? "Đang gửi..." : "Gửi dự đoán"}
+                </Button>
+              </div>
+
+              {lastResult === "correct" && (
+                <Text style={{ color: "var(--green-11)" }}>
+                  🎉 Đoán đúng rồi! Bạn đã nhận được 1 Flag.
+                </Text>
+              )}
+              {lastResult === "wrong" && (
+                <Text style={{ color: "var(--red-11)" }}>
+                  😢 Bạn đoán chưa đúng, thử lại số khác nhé!
+                </Text>
+              )}
+            </div>
+
+            {txHash && (
+              <div
+                style={{
+                  marginTop: "1rem",
+                  padding: "1rem",
+                  background: "var(--blue-a3)",
+                  borderRadius: "8px",
+                }}
+              >
+                <Text
+                  size="2"
+                  style={{
+                    color: "var(--blue-11)",
+                    display: "block",
+                    marginBottom: "0.5rem",
+                  }}
+                >
+                  ✅ Transaction confirmed
+                </Text>
+                <Text
+                  size="1"
+                  style={{
+                    color: "var(--blue-11)",
+                    display: "block",
+                    fontFamily: "monospace",
+                    wordBreak: "break-all",
+                  }}
+                >
+                  Tx Hash: {txHash}
+                </Text>
+              </div>
+            )}
+
+            {error && (
+              <div
+                style={{
+                  marginTop: "1rem",
+                  padding: "1rem",
+                  background: "var(--red-a3)",
+                  borderRadius: "8px",
+                }}
+              >
+                <Text style={{ color: "var(--red-11)" }}>
+                  Error: {error.message}
+                </Text>
+              </div>
+            )}
+          </>
+        )}
+      </Container>
+    </main>
   );
 }
